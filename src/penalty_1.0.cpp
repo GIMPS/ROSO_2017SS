@@ -1,0 +1,450 @@
+//============================================================================
+// Name        : soccer_client_1.cpp
+// Author      :
+// Version     :
+// Copyright   : Your copyright notice
+// Description : Client for RTDB which controls team 1, Ansi-style
+//============================================================================
+
+
+#include <time.h>
+#include <iostream>
+#include <bits/stdc++.h>
+#include "kogmo_rtdb.hxx"
+#include "robo_control.h"
+#include "referee.h"
+#include "angle.h"
+#include "share.h"
+
+using namespace std;
+
+int main(void) {
+
+
+
+    /* Coordinate of the field
+
+
+    (-1,38 0,89)--------------(-1,46 -0,89)
+    |             |       |              |
+    |             |_______|              |
+    |                                    |
+    |                                    |
+    |                                    |
+    |           O                        |
+    |          -+-   <-- CR7             |
+    |          77 o    <--ball           |
+    |               _____                |
+    |              /     \               |
+    |             /       \              |
+    |------------------------------------|
+    |             \       /              |
+    |              \_____/               |
+    |                                    |
+    |                                    |
+    |                                    |
+    |                                    |
+    |                                    |
+    |                                    |
+    |              _______               |
+    |             |       |              |
+    |             |       |              |
+    (1,42  0,875)-------------(1,47 -0,92)
+
+
+
+      COMPUTER    COMPUTER    COMPUTER
+
+      ******You may sitting here******
+
+      COMPUTER    COMPUTER    COMPUTER
+
+      ******You may sitting here******
+
+      COMPUTER    COMPUTER    COMPUTER
+
+      ******You may sitting here******
+
+
+                                                     */
+
+
+
+
+
+
+
+    //--------------------------------- Init --------------------------------------------------
+
+    /** Use client number according to your lab_roso_stud account number!
+     *
+     *	This is necessary in order to assure that there are unique
+     *	connections to the RTDB.
+     *
+     */
+    const int client_nr = 8;
+
+    /** Type in the rfcomm number of the robot you want to connect to.
+     *  The numbers of the robots you are connected to can be found on the
+     *  screen when you connected to them.
+     *
+     *  The red robots' number will be in the range of 3 to 5
+     *  The blue robots' number will be in the range from 0 to 2
+     *
+     *  The robots are always connected to the lowest free rfcomm device.
+     *  Therefore if you have two blue robots connected the will be
+     *  connected to rfcomm number 0 and number 1...
+     *
+     */
+        int rfcomm_nr0 = 3;
+         int rfcomm_nr1 = 4;
+          int rfcomm_nr2 = 5;
+
+    /*
+
+    // uncomment this if you want to select manually your robot
+    // key input not available from QtCreator console, only from linux console.
+
+    cout << "Specify rfcomm number of the robot you want to move: ";
+    while (1) {
+        cin >> rfcomm_nr;
+        if (!((rfcomm_nr >= 0) && (rfcomm_nr <= 7))) {
+            cout << "Please specify valid rfcomm number between 0 and 7"
+                    << endl;
+        } else {
+            break;
+        }
+        }
+    */
+
+    try {
+
+        /** Establish connection to the RTDB.
+         *
+         *  The connection to the RTDB is necessary in order to get access
+         *  to the control and the status of the robots which are both stored
+         *  in the RTDB.
+         *
+         *  In the RTDB there are also informations about the ball and the
+         *  other robot positions.
+         *
+         */
+        cout << endl << "Connecting to RTDB..." << endl;
+        /** Create the client name with the unique client number*/
+        string client_name = "pololu_client_";
+        client_name.push_back((char) (client_nr + '0'));
+        RTDBConn DBC(client_name.data(), 0.1, "");
+        /** Create a new RoboControl object.
+         *
+         *  This is the basis for any communication with the robot.
+         *
+         *  We need to hand over the RTDB connection (DBC) and the rfcomm
+         *  number of the robot we want to control.
+         */
+        RoboControl robo0(DBC, rfcomm_nr0);
+        RoboControl robo1(DBC, rfcomm_nr1);
+        RoboControl robo2(DBC, rfcomm_nr2);
+        Referee ref(DBC ); ref.Init();
+        /** Now let's print out some information about the robot... */
+        uint8_t mac[6];
+        robo0.GetMac(mac);
+        robo1.GetMac(mac);
+        robo2.GetMac(mac);
+        cout << "Robo @ rfcomm" << rfcomm_nr0 << " with Mac: ";
+        for (int j = 0; j < 5; j++)
+            cout << hex << (int) mac[j] << ":";
+        cout << hex << (int) mac[5] << endl;
+         cout << "\t initial position: " << robo0.GetPos() << endl;
+                //cout << "\t accuvoltage: " << dec << (int) robo.GetAccuVoltage()
+                //		<< "mV" << endl;
+        cout << "\t initial position: " << robo0.GetPos() << endl;
+        cout << "\t initial rotation: " << robo0.GetPhi() << endl;
+
+        /** Create a ball object
+         *
+         *  This ball abject gives you access to all information about the ball
+         *  which is extracted from the cam.
+         *
+         */
+        RawBall ball(DBC);
+        /** lets print this information: */
+        cout << "Ball informations:" << endl;
+        cout << "\t initial position: " << ball.GetPos() << endl;
+        /** Notice that the rotation here refers to the moving direction of the ball.
+         *  Therefore if the ball does not move the rotation is not defined.
+         */
+         cout << "\t initial position: " << robo0.GetPos() << endl;
+        cout << "\t initial direction: " << ball.GetPhi() << endl;
+        cout << "\t initial velocity: " << ball.GetVelocity() << endl;
+
+        //-------------------------------------- Ende Init ---------------------------------
+
+        /** Define four positions which form a rectangle...
+         *
+         */
+
+
+
+        // ref.GetPlayMode are integers indicating status of the game pregame, setup, kickoff etc
+
+       //0 == referee init
+        // 1 == before kickoff
+        // 2 == Kick_off
+        //3 == before_penalty
+        //4 == penalty
+        // 5 == play_on
+
+ cout<<"test"<<endl;
+
+        Position goalspot (-1.2,0);
+        Position goalpatrol1 (-1.3,-0.4);
+        Position goalpatrol2 (-1.3,0.4);
+        Position random_spot (0,0);
+        Position kickoff (-0.2, 0);
+        Position kickoff_defender (-0.7,0);
+        Position rest_point1(1.2,0.8);
+        Position rest_point2(1.2,-0.8);
+
+        int penalty_skipper;
+        penalty_skipper =0;
+        int init_skipper ;
+        init_skipper = 0;
+        Position penalty_before (0,0);
+        //Position penalty_start (ball.GetX()-0.2,ball.GetY());
+    cout<<"test"
+;
+while(1){
+    cout << "Round Start" <<endl;
+
+
+
+    if (ref.GetPlayMode() == 0){
+        init_skipper =0;
+
+        cout << "referee init"<<endl;}
+    else if (ref.GetPlayMode() == 1)
+{
+        cout << "before kickoff"<<endl;}
+    else if (ref.GetPlayMode() == 2)
+         {   init_skipper =0;
+
+        cout << "kick off"<<endl;}
+    else if (ref.GetPlayMode() == 3)
+          {  init_skipper =0;
+
+        cout << " before penalty"<<endl;}
+    else if (ref.GetPlayMode() == 4)
+          {  init_skipper =0;
+
+        cout << "penalty"<<endl;}
+    else if (ref.GetPlayMode() == 5)
+          {  init_skipper =0;
+
+        cout << "play on"  <<endl  ;}
+
+
+
+
+
+
+
+     cout << init_skipper<< "signum, ball coord"<< ball.GetY()<<endl;
+        //GOALKEEPER START
+        class goalkeeper{
+        public:
+        };
+
+
+            /** Sequentially move to the four different positions.
+                         *  The while is excworkspace/soccerexampleited if the position is reached.
+             */
+            cout << "referee mode"<< ref.GetPlayMode()<< endl;
+
+
+
+// ROBOT 0 GOALKEEPER
+if (ref.GetPlayMode() == 1&& init_skipper == 0){
+
+    robo0.GotoXY(goalspot.GetX(), goalspot.GetY(),160,true);
+    while (robo0.GetPos().DistanceTo(goalspot) > 0.10) usleep(10000);
+
+    //robo0.TurnAbs(0);
+
+
+}
+else  if(ref.GetPlayMode() == 2) {
+   // robo0.GotoXY(goalpatrol1.GetX(), goalpatrol1.GetY(),160,true);
+   // while (robo0.GetPos().DistanceTo(goalpatrol1) > 0.10) usleep(1000);
+   // robo0.GotoXY(goalpatrol2.GetX(), goalpatrol2.GetY(),160,true);
+   // while (robo0.GetPos().DistanceTo(goalpatrol2) > 0.10) usleep(1000);
+
+}
+else if(ref.GetPlayMode()==3){
+
+
+}
+    //robo0.GotoXY(goalspot.GetX()-0.1, ball.GetY()*0.3,160, true);
+//            while (robo.GetPos().DistanceTo(goalspot) > 0.10) usleep(10000);
+
+
+
+
+
+
+
+
+//GOALKEEPER END
+
+
+
+
+
+// ROBOT 1 STRIKER
+
+if (ref.GetPlayMode() == 1 && init_skipper == 0){
+                robo1.GotoXY(kickoff.GetX(), kickoff.GetY(),160,true);
+                while (robo1.GetPos().DistanceTo(kickoff) > 0.10) usleep(10000);
+                //robo1.TurnAbs(0);
+
+          }
+//            while (robo.GetPos().DistanceTo(goalspot) > 0.10) usleep(10000);
+else if (ref.GetPlayMode() == 1&& init_skipper == 0){
+    robo1.GotoXY(kickoff_defender.GetX(), kickoff_defender.GetY(),160, true);
+    while (robo1.GetPos().DistanceTo(kickoff_defender) > 0.10) usleep(10000);
+}
+
+        //GOALKEEPER END
+
+
+
+// ROBOT 2 DEFENDER
+
+
+if (ref.GetPlayMode() == 1&& init_skipper == 0){
+
+                robo2.GotoXY(kickoff_defender.GetX(), kickoff_defender.GetY(),160,true);
+                while (robo2.GetPos().DistanceTo(kickoff_defender) > 0.10) usleep(10000);
+                cout << robo2.GetPhi()<< endl<<endl;
+                //robo2.TurnAbs(0);
+
+}
+//            while (robo.GetPos().DistanceTo(goalspot) > 0.10) usleep(10000);
+
+
+
+
+
+//PENALTY SHOOT MODE
+
+
+
+
+    //robo2 END
+
+    //robo0 AS BOTH DEFENDER AND SHOOTER
+
+            // BEFORE PENALTY START
+
+                    //GOALKEEPER MODE START
+
+
+                    if (ref.GetPlayMode() == 3 && ref.GetBlueSide()==1 ){
+                        cout<< "Penalty_before Defend starts"<<endl;
+                        robo0.GotoXY(goalspot.GetX(), goalspot.GetY(),160,true);
+                        while (robo0.GetPos().DistanceTo(goalspot) > 0.1) usleep(10000);
+                        cout<< "Penalty_before Defend ends"<<endl;
+                        penalty_skipper = penalty_skipper+1;
+                        cout << penalty_skipper;
+
+                    }
+
+                    //GOALKEEPER MODE END
+
+                    //SHOOTER MODE START
+
+                    if (ref.GetPlayMode() == 3 && ref.GetBlueSide()==0 ){
+                        cout<< "Penalty_before Attack starts"<<endl;
+                        robo2.GotoXY(ball.GetX()+0.1, ball.GetY(),160,true);
+                        while (robo2.GetPos().DistanceTo(ball.GetPos()) > 0.5) usleep(10000);
+                        cout<< "Penalty_before Attack ends"<<endl;
+        penalty_skipper = penalty_skipper+1;
+        cout << penalty_skipper;
+                    }
+
+                    //SHOOTER MODE END
+
+            // BEFORE PENALTY END
+
+            // PENALTY SHOOT START
+
+                //GOALKEEPER MODE START
+                if (ref.GetPlayMode() == 4&&ref.GetBlueSide()==1){
+
+                    cout<< "Penalty Shoot Defend starts"<<endl;
+
+                    while(ref.GetPlayMode()==4)
+                    {
+                        if(robo0.GetPos().DistanceTo(ball.GetPos()) > 0.6) {
+
+                            robo0.GotoXY(goalspot.GetX(), ball.GetY()*0.4,160,true);
+                        usleep(500000);
+                        }
+
+
+                        else
+
+                            robo0.GotoXY(goalspot.GetX(), ball.GetY()*1,160,true);
+                        usleep(500000);
+
+
+
+
+                    }
+                    cout<< "Penalty Shoot Defend ends"<<endl;
+                //    while (robo0.GetPos().DistanceTo(ball.GetPos()) > 0.1) usleep(100);
+                }
+                //GOALKEEPER MODE END
+
+
+                //SHOOTER MODE START
+                if (ref.GetPlayMode() == 4&&ref.GetBlueSide()==0){
+
+                    cout << "Penalty_shoot Attack starts" << endl;
+
+                    //robo0.GotoXY(penalty_before.GetX(), penalty_before.GetY(),160, true);
+                    //while (robo0.GetPos().DistanceTo(penalty_before) > 0.1) usleep(100);
+
+                    //cout << "Penalty_shoot in position" << endl;
+
+                    robo2.GotoXY(ball.GetX(), ball.GetY(),160, false);
+
+                    while (robo2.GetPos().DistanceTo(ball.GetPos()) > 0.1 &&ref.GetPlayMode() == 4&&ref.GetBlueSide()==0) usleep(10000);
+
+                    cout << "Penalty_shoot ends" << endl;
+                }
+
+                //SHOOTER MODE END
+
+        //PENALTY SHOOT END
+    //robo0 END
+
+
+
+
+//PENALTY SHOOT MODE
+
+
+cout << "Round End" <<endl;
+usleep(10000);
+init_skipper = 1;
+}
+
+
+
+    } catch (DBError err) {
+        cout << "Client died on Error: " << err.what() << endl;
+    }
+    cout << "end" << endl;
+    return 0;
+}
+
